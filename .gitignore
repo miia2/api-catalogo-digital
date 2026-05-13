@@ -1,0 +1,14 @@
+# Ignorar ambiente virtual
+venv/
+env/
+
+# Ignorar arquivos compilados do Python
+__pycache__/
+*.pyc
+
+# Ignorar banco de dados local
+*.db
+*.sqlite3
+
+# IGNORAR SENHAS E CHAVES (O mais importante!)
+.env
