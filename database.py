@@ -5,6 +5,17 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# No seu database.py, logo após o load_dotenv()
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
+
+# ADICIONE ESTAS LINHAS AQUI:
+if SQLALCHEMY_DATABASE_URL and SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
+    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+# Se não houver URL (testes locais), usa o SQLite
+if not SQLALCHEMY_DATABASE_URL:
+    SQLALCHEMY_DATABASE_URL = "sqlite:///./catalogo.db"
+
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./catalogo.db")
 
 if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
