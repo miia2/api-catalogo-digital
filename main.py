@@ -14,6 +14,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# No main.py, logo após o app.add_middleware(...)
+@app.get("/")
+def read_root():
+    return {"status": "API do Catálogo Digital Online e Pronta!"}
+
 models.Base.metadata.create_all(bind=database.engine)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
