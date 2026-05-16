@@ -48,3 +48,11 @@ class UserOut(BaseModel):
 # Perfil da Loja Pública com a lista de produtos
 class StoreProfile(UserOut):
     products: List[ProductOut] = []
+
+# No final do seu schemas.py:
+
+class ProductUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    price: Optional[float] = None
+    is_available: Optional[bool] = None    

@@ -125,7 +125,7 @@ def delete_product(
     return {"message": "Produto excluído com sucesso!"}
 
 # ROTA PARA O PAINEL DO LOJISTA VER SEUS PRÓPRIOS PRODUTOS
-@app.get("/my-products", response_model=list[schemas.ProductOut])
+@app.get("/products/me", response_model=list[schemas.ProductOut])
 def get_my_products(
     db: Session = Depends(database.get_db), 
     current_user: models.User = Depends(get_current_user)
