@@ -124,6 +124,12 @@ def delete_product(
     
     return {"message": "Produto excluído com sucesso!"}
 
+# Adicione esta rota no seu main.py
+@app.get("/users/me", response_model=schemas.UserOut)
+def read_users_me(current_user: models.User = Depends(get_current_user)):
+    """Retorna os dados do lojista que está logado atualmente"""
+    return current_user
+
 # ROTA PARA O PAINEL DO LOJISTA VER SEUS PRÓPRIOS PRODUTOS
 @app.get("/products/me", response_model=list[schemas.ProductOut])
 def get_my_products(
