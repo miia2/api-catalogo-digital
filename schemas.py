@@ -12,14 +12,6 @@ class ProductBase(BaseModel):
 class ProductCreate(ProductBase):
     pass
 
-# No schemas.py (Adicione isso junto aos outros schemas de Product)
-class ProductUpdate(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    price: Optional[float] = None
-    image_url: Optional[str] = None
-    is_available: Optional[bool] = None
-
 class ProductOut(ProductBase):
     id: int
     user_id: int
