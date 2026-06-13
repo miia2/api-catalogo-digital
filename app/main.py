@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-import models, schemas, database, security
+import app.core.models as models, app.schemas as schemas, app.core.database as database, security
 
 app = FastAPI(title="SaaS Catálogo Digital")
 
