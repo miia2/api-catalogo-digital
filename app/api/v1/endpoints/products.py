@@ -1,13 +1,36 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Form
 from sqlalchemy.orm import Session
-from app import schemas, models
-from app.core import database, security
+from app import models, schemas
+from app.core import database, security, services
 
 router = APIRouter()
 
 @router.post("/", response_model=schemas.ProductOut)
-def criar_produto(product: schemas.ProductCreate, db: Session = Depends(database.get_db), current_user: models.User = Depends(security.get_current_user)):
-    novo_produto = models.Product(**product.model_dump(), user_id=current_user.id)
+def criar_produto(
+    name: str = Form(...),
+    price: float = Form(...),
+    description: str = Form(None),
+    is_available: bool = Form(True),
+    image: UploadFile = File(...), # Exige o envio do arquivo de imagem
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(security.get_current_user)
+):
+    # 1. Envia a imagem recebida para o Cloudinary e pega a URL
+    try:
+        url_da_imagem = services.upload_imagem_produto(image)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    # 2. Salva o produto no banco de dados com a URL da nuvem
+    novo_produto = models.Product(
+        name=name,
+        price=price,
+        description=description,
+        is_available=is_available,
+        image_url=url_da_imagem, # Grava a URL estável do Cloudinary
+        user_id=current_user.id
+    )
+    
     db.add(novo_produto)
     db.commit()
     db.refresh(novo_produto)

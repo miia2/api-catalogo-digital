@@ -4,8 +4,6 @@ from app.api.v1.api import api_router
 from app.core.database import engine
 from app import models
 
-# Cria as tabelas do banco (temporário até usar Alembic)
-models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="SaaS Catálogo Digital Pro")
 

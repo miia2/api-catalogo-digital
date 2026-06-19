@@ -22,5 +22,9 @@ class Settings(BaseSettings):
         extra="ignore"
     )
 
+    CLOUDINARY_CLOUD_NAME: str
+    CLOUDINARY_API_KEY: str
+    CLOUDINARY_API_SECRET: str
+
 # Instanciamos a classe para importar direto nos outros arquivos
 settings = Settings()
