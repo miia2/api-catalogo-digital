@@ -49,3 +49,12 @@ class ProductUpdate(BaseModel):
     price: Optional[float] = None
     image_url: Optional[str] = None
     is_available: Optional[bool] = None    
+
+class ProductPaginationOut(BaseModel):
+    items: List[ProductOut]  # A lista com os 20 produtos da página atual
+    total: int               # O total de produtos que o lojista tem no banco (ex: 150)
+    page: int                # O número da página atual
+    size: int                # A quantidade de itens por página
+
+    class Config:
+        from_attributes = True    

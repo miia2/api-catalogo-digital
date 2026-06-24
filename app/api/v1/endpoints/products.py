@@ -1,9 +1,41 @@
-from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Form
+from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Form, Query
 from sqlalchemy.orm import Session
 from app import models, schemas
 from app.core import database, security, services
+from typing import Optional
 
 router = APIRouter()
+
+@router.get("/me", response_model=schemas.ProductPaginationOut) # Alterado o response_model
+def get_my_products(
+    page: int = Query(1, ge=1, description="Número da página"),
+    size: int = Query(20, ge=1, le=100, description="Itens por página"),
+    search: Optional[str] = Query(None, description="Filtrar produtos por nome"),
+    db: Session = Depends(database.get_db), 
+    current_user: models.User = Depends(security.get_current_user)
+):
+    # 1. Criamos a query base filtrando pelo usuário logado
+    query = db.query(models.Product).filter(models.Product.user_id == current_user.id)
+    
+    # 2. Se o usuário enviou um termo de busca, aplicamos o filtro (IgnoreCase / ILIKE)
+    if search:
+        query = query.filter(models.Product.name.ilike(f"%{search}%"))
+        
+    # 3. Contamos o total de itens que batem com os filtros (antes de paginar)
+    total_items = query.count()
+    
+    # 4. Calculamos o pulo (offset) e aplicamos a paginação
+    # Ex: Página 1: (1-1)*20 = offset 0. Página 2: (2-1)*20 = offset 20.
+    skip = (page - 1) * size
+    produtos_paginados = query.offset(skip).limit(size).all()
+    
+    # 5. Retornamos o objeto estruturado com os metadados
+    return {
+        "items": produtos_paginados,
+        "total": total_items,
+        "page": page,
+        "size": size
+    }
 
 @router.post("/", response_model=schemas.ProductOut)
 def criar_produto(
@@ -64,13 +96,41 @@ def delete_product(product_id: int, db: Session = Depends(database.get_db), curr
     db.commit()
     return {"message": "Produto excluído com sucesso!"}
 
-@router.get("/me", response_model=list[schemas.ProductOut])
-def get_my_products(db: Session = Depends(database.get_db), current_user: models.User = Depends(security.get_current_user)):
-    return db.query(models.Product).filter(models.Product.user_id == current_user.id).all()
-
-@router.get("/store/{slug}", response_model=schemas.StoreProfile)
-def get_store_catalog(slug: str, db: Session = Depends(database.get_db)):
+@router.get("/store/{slug}")
+def get_store_catalog(
+    slug: str,
+    page: int = Query(1, ge=1),
+    size: int = Query(20, ge=1, le=100),
+    search: Optional[str] = Query(None),
+    db: Session = Depends(database.get_db)
+):
+    # 1. Busca o lojista pelo slug
     user = db.query(models.User).filter(models.User.store_slug == slug).first()
     if not user:
         raise HTTPException(status_code=404, detail="Loja não encontrada")
-    return user
+        
+    # 2. Monta a query de produtos dessa loja específica
+    query = db.query(models.Product).filter(models.Product.user_id == user.id)
+    
+    if search:
+        query = query.filter(models.Product.name.ilike(f"%{search}%"))
+        
+    total_items = query.count()
+    skip = (page - 1) * size
+    produtos_paginados = query.offset(skip).limit(size).all()
+    
+    # Retornamos os dados do perfil da loja e os produtos paginados separadamente
+    return {
+        "store_info": {
+            "id": user.id,
+            "full_name": user.full_name,
+            "store_slug": user.store_slug,
+            "whatsapp_number": user.whatsapp_number
+        },
+        "products_pagination": {
+            "items": [schemas.ProductOut.model_validate(p) for p in produtos_paginados],
+            "total": total_items,
+            "page": page,
+            "size": size
+        }
+    }
