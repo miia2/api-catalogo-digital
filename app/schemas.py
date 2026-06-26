@@ -1,4 +1,5 @@
-from pydantic import BaseModel, EmailStr
+import re
+from pydantic import BaseModel, EmailStr, field_validator
 from typing import List, Optional
 
 # --- Produtos ---
@@ -26,6 +27,26 @@ class UserCreate(BaseModel):
     password: str
     whatsapp_number: str
     store_slug: str
+
+    @field_validator('store_slug')
+    @classmethod
+    def validar_store_slug(cls, v: str) -> str:
+        # 1. Converte automaticamente para minúsculas e remove espaços nas pontas
+        slug_limpo = v.strip().lower()
+
+        # 2. Expressão Regular (Regex):
+        # ^[a-z0-7-]+$ significa: Começo ao fim da string só aceita letras minúsculas de a-z, números e hífen.
+        if not re.match(r"^[a-z0-9-]+$", slug_limpo):
+            raise ValueError(
+                "O link da loja deve conter apenas letras minúsculas, números e hífens (ex: minha-loja-123). "
+                "Espaços, acentos e caracteres especiais não são permitidos."
+            )
+        
+        # 3. Evita que o usuário crie slugs vazios ou compostos apenas por hífens "---"
+        if slug_limpo.replace("-", "") == "":
+            raise ValueError("O link da loja não pode ser composto apenas por hífens.")
+
+        return slug_limpo
 
 class UserOut(BaseModel):
     id: int
