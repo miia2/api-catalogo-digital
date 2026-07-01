@@ -10,8 +10,8 @@ app = FastAPI(title="SaaS Catálogo Digital Pro")
 # Adicione a URL que a Vercel gerar para o seu frontend assim que fizer o deploy dela lá
 ORIGINS_PERMITIDAS = [
     "http://localhost:5173",     # URL padrão do Vite rodando localmente
-    "http://127.0.0.1:5173",    # Alternativa local
-    "https://seu-catalogo-frontend.vercel.app" # Substitua pela sua URL real da Vercel depois!
+    "https://api-catalogo-digital.onrender.com",    # Alternativa local
+    "https://portfolio-v2-phi-ebon.vercel.app" # Substitua pela sua URL real da Vercel depois!
 ]
 
 # 2. Injetamos a lista no middleware de segurança
