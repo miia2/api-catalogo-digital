@@ -6,20 +6,19 @@ import os
 
 app = FastAPI(title="SaaS Catálogo Digital Pro")
 
-# 1. Definimos a lista de origens permitidas
-# Adicione a URL que a Vercel gerar para o seu frontend assim que fizer o deploy dela lá
+# 1. Definimos APENAS os endereços do FRONTEND aqui
 ORIGINS_PERMITIDAS = [
-    "http://localhost:5173",     # URL padrão do Vite rodando localmente
-    "https://api-catalogo-digital.onrender.com",    # Alternativa local
-    "https://portfolio-v2-phi-ebon.vercel.app" # Substitua pela sua URL real da Vercel depois!
+    "http://localhost:5173",                     # Frontend rodando no seu computador
+    "http://127.0.0.1:5173",                    # Alternativa de IP local do Frontend
+    "https://portfolio-v2-phi-ebon.vercel.app"   # Frontend oficial publicado na Vercel
 ]
 
 # 2. Injetamos a lista no middleware de segurança
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ORIGINS_PERMITIDAS, # Trocado de ["*"] para a nossa lista restrita
+    allow_origins=ORIGINS_PERMITIDAS, 
     allow_credentials=True,
-    allow_methods=["*"], # Permite GET, POST, PUT, DELETE apenas para as origens acima
+    allow_methods=["*"], 
     allow_headers=["*"],
 )
 
