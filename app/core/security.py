@@ -19,19 +19,21 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
 # --- Funções de Criptografia e Token ---
 
 def gerar_hash_senha(senha: str):
-    """Transforma a senha em um hash seguro usando bcrypt direto"""
+    """Transforma a senha em um hash seguro garantindo compatibilidade de tipos"""
     pwd_bytes = senha.encode('utf-8')
     salt = bcrypt.gensalt()
     hash_bytes = bcrypt.hashpw(pwd_bytes, salt)
     return hash_bytes.decode('utf-8') 
 
 def verificar_senha(senha_pura: str, senha_hash: str):
-    """Confere se a senha pura bate com o hash salvo"""
+    """Confere a senha pura convertendo os tipos de forma segura para o banco"""
     try:
+        # Garante que ambos estejam convertidos para bytes antes de checar
         pwd_bytes = senha_pura.encode('utf-8')
         hash_bytes = senha_hash.encode('utf-8')
         return bcrypt.checkpw(pwd_bytes, hash_bytes)
-    except Exception:
+    except Exception as e:
+        print(f"Erro na verificação de senha: {e}")
         return False
 
 def criar_token_acesso(data: dict):
