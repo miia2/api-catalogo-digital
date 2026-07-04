@@ -1,8 +1,20 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.api import api_router
 from app.core.config import settings
-import os
+
+# --- RODAR AS MIGRAÇÕES AUTOMATICAMENTE APENAS EM PRODUÇÃO ---
+# Isso evita conflitos quando você estiver testando localmente no seu computador
+if os.getenv("RENDER") or os.getenv("DATABASE_URL"):
+    try:
+        print("Iniciando migrações automáticas do Alembic na nuvem...")
+        import alembic.config
+        alembic.config.main(argv=["upgrade", "head"])
+        print("Migrações concluídas com sucesso!")
+    except Exception as e:
+        print(f"Aviso: Não foi possível rodar o Alembic automaticamente ({e}).")
+# -------------------------------------------------------------
 
 app = FastAPI(title="SaaS Catálogo Digital Pro")
 
