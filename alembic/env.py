@@ -1,3 +1,5 @@
+import sys
+import os
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
@@ -5,29 +7,20 @@ from sqlalchemy import pool
 
 from alembic import context
 
-import os
-import sys
+# 1. Ajuste de caminhos no topo (Garante que tudo abaixo funcione)
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# Garante que o Alembic consiga enxergar a pasta 'app' na raiz do projeto
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-# Agora importamos o seu gerenciador de configurações e a Base dos modelos
+# 2. Centralizando TODOS os imports do seu app aqui em cima
 from app.core.config import settings
-from app.models import Base  # Certifique-se de que seus modelos herdam dessa Base
+from app.models import Base 
+from app.core.database import SQLALCHEMY_DATABASE_URL # Mapeado aqui no topo!
 
-# this is the Alembic Config object, which provides
-# access to the values within the .ini file in use.
+# Objeto de configuração do Alembic
 config = context.config
 
-# Interpret the config file for Python logging.
-# This line sets up loggers basically.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
@@ -61,22 +54,24 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    """Run migrations in 'online' mode.
-
-    In this scenario we need to create an Engine
-    and associate a connection with the context.
-
-    """
+    """Run migrations in 'online' mode."""
+    
     configuration = config.get_section(config.config_ini_section) or {}
-    configuration["sqlalchemy.url"] = settings.DATABASE_URL
+    # Forçamos o Alembic a usar a URL correta (Seja SQLite local ou Postgres do Supabase)
+    configuration["sqlalchemy.url"] = SQLALCHEMY_DATABASE_URL
+    # --------------------------------------
 
-    connectable = engine_from_config(
-        configuration,
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
+    connect_into = context.config.attributes.get("connection", None)
+    
+    if connect_into is None:
+        # Passamos a nossa configuração atualizada para o motor do Alembic
+        connect_into = engine_from_config(
+            configuration,
+            prefix="sqlalchemy.",
+            poolclass=pool.NullPool,
+        )
 
-    with connectable.connect() as connection:
+    with connect_into.connect() as connection:
         context.configure(
             connection=connection, target_metadata=target_metadata
         )
