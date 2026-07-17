@@ -1,3 +1,7 @@
+import bcrypt
+
+bcrypt.__about__ = type('About', (object,), {'__version__': bcrypt.__version__})
+
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from jose import jwt, JWTError
