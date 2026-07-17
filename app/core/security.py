@@ -1,6 +1,6 @@
-import bcrypt 
+from passlib.context import CryptContext
 from datetime import datetime, timedelta
-from jose import jwt, JWTError               # Alterado para 'jose' que você já usa
+from jose import jwt, JWTError
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
@@ -8,42 +8,35 @@ from app.core import database
 from app import models
 from app.core.config import settings
 
-
 SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = settings.ALGORITHM
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
-# Configura de onde o FastAPI vai extrair o token (da rota de login)
+# Inicializa o construtor de senhas leve e otimizado para nuvem
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# Configura de onde o FastAPI vai extrair o token
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
 
-# --- Funções de Criptografia e Token ---
+# --- Funções de Criptografia e Token Otimizadas ---
 
 def gerar_hash_senha(senha: str):
-    """Transforma a senha em um hash seguro garantindo compatibilidade de tipos"""
-    pwd_bytes = senha.encode('utf-8')
-    salt = bcrypt.gensalt()
-    hash_bytes = bcrypt.hashpw(pwd_bytes, salt)
-    return hash_bytes.decode('utf-8') 
+    """Transforma a senha em um hash usando o motor otimizado da passlib"""
+    return pwd_context.hash(senha)
 
 def verificar_senha(senha_pura: str, senha_hash: str):
-    """Confere a senha pura convertendo os tipos de forma segura para o banco"""
+    """Confere a senha com consumo de CPU reduzido, ideal para instâncias gratuitas"""
     try:
-        # Garante que ambos estejam convertidos para bytes antes de checar
-        pwd_bytes = senha_pura.encode('utf-8')
-        hash_bytes = senha_hash.encode('utf-8')
-        return bcrypt.checkpw(pwd_bytes, hash_bytes)
+        return pwd_context.verify(senha_pura, senha_hash)
     except Exception as e:
         print(f"Erro na verificação de senha: {e}")
         return False
 
 def criar_token_acesso(data: dict):
     a_copiar = data.copy()
-    # datetime.utcnow() foi descontinuado em versões novas do Python, usamos zone-aware ou utcnow padrão do jose
     expira = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     a_copiar.update({"exp": expira})
     return jwt.encode(a_copiar, SECRET_KEY, algorithm=ALGORITHM)
-
-# --- Dependência de Autenticação ---
 
 def get_current_user(db: Session = Depends(database.get_db), token: str = Depends(oauth2_scheme)):
     """Injeta o usuário logado nas rotas protegidas decodificando o JWT"""
