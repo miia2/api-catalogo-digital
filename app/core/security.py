@@ -1,13 +1,9 @@
-import bcrypt
-
-bcrypt.__about__ = type('About', (object,), {'__version__': bcrypt.__version__})
-
-from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from jose import jwt, JWTError
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
+from pwdlib import PasswordHash  # Biblioteca moderna e recomendada
 from app.core import database
 from app import models
 from app.core.config import settings
@@ -16,23 +12,20 @@ SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = settings.ALGORITHM
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
-pwd_context = CryptContext(
-    schemes=["bcrypt"], 
-    deprecated="auto",
-    bcrypt__handle_long_passwords="truncate"  # <-- Certifique-se de que há DOIS underscores aqui!
-)
+# Inicializa o motor de senhas moderno (Trata o limite de 72 bytes automaticamente)
+pwd_context = PasswordHash.recommended()
 
 # Configura de onde o FastAPI vai extrair o token
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
 
-# --- Funções de Criptografia e Token Otimizadas ---
+# --- Funções de Criptografia e Token ---
 
 def gerar_hash_senha(senha: str):
-    """Transforma a senha em um hash usando o motor otimizado da passlib"""
+    """Transforma a senha em um hash seguro e leve para a nuvem"""
     return pwd_context.hash(senha)
 
 def verificar_senha(senha_pura: str, senha_hash: str):
-    """Confere a senha com consumo de CPU reduzido, ideal para instâncias gratuitas"""
+    """Confere a senha pura com o hash de forma ultra rápida"""
     try:
         return pwd_context.verify(senha_pura, senha_hash)
     except Exception as e:
