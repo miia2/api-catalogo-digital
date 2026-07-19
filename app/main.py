@@ -20,15 +20,16 @@ app = FastAPI(title="SaaS Catálogo Digital Pro")
 
 # 1. Definimos APENAS os endereços do FRONTEND aqui
 ORIGINS_PERMITIDAS = [
-    "http://localhost:5173",                     # Frontend rodando no seu computador
-    "http://127.0.0.1:5173",                    # Alternativa de IP local do Frontend
-    "https://portfolio-v2-phi-ebon.vercel.app"   # Frontend oficial publicado na Vercel
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",                    # Alternativa de IP local do Frontend
+    "https://portfolio-v2-6p1w2zjfh-miia2s-projects.vercel.app",   # Frontend oficial publicado na Vercel
 ]
 
 # 2. Injetamos a lista no middleware de segurança
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ORIGINS_PERMITIDAS, 
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"], 
     allow_headers=["*"],
