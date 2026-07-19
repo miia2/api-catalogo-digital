@@ -17,7 +17,12 @@ if SQLALCHEMY_DATABASE_URL and SQLALCHEMY_DATABASE_URL.startswith("postgres://")
 if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
     engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 else:
-    engine = create_engine(SQLALCHEMY_DATABASE_URL)
+    # 🛡️ ADICIONADO: Parâmetros robustos de pool para manter a conexão ativa com a nuvem
+    engine = create_engine(
+        SQLALCHEMY_DATABASE_URL,
+        pool_pre_ping=True,  # Dá um "alô" rápido no banco antes de cada requisição. Se caiu, reconecta!
+        pool_recycle=300     # Descarta e refaz conexões a cada 5 minutos para evitar o timeout do Neon
+    )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base() 
