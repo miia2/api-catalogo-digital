@@ -16,11 +16,10 @@ SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = settings.ALGORITHM
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
-# Inicializa o construtor de senhas leve e otimizado para nuvem
 pwd_context = CryptContext(
     schemes=["bcrypt"], 
     deprecated="auto",
-    bcrypt__handle_long_passwords="truncate"
+    bcrypt__handle_long_passwords="truncate"  # <-- Certifique-se de que há DOIS underscores aqui!
 )
 
 # Configura de onde o FastAPI vai extrair o token
