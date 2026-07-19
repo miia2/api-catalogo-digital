@@ -13,7 +13,7 @@ ALGORITHM = settings.ALGORITHM
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
 # Inicializa o motor de senhas moderno (Trata o limite de 72 bytes automaticamente)
-pwd_context = PasswordHash.from_string("bcrypt")
+pwd_context = PasswordHash.from_id("bcrypt")
 
 # Configura de onde o FastAPI vai extrair o token
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
