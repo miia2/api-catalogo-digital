@@ -1,9 +1,9 @@
+import bcrypt  # Usando o motor nativo direto
 from datetime import datetime, timedelta
 from jose import jwt, JWTError
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
-from pwdlib import PasswordHash  
 from app.core import database
 from app import models
 from app.core.config import settings
@@ -12,22 +12,27 @@ SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = settings.ALGORITHM
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
-# Inicializa o motor de senhas moderno (Trata o limite de 72 bytes automaticamente)
-pwd_context = PasswordHash.from_id("bcrypt")
-
 # Configura de onde o FastAPI vai extrair o token
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
 
-# --- Funções de Criptografia e Token ---
+# --- Funções de Criptografia e Token Seguras e Robustas ---
 
 def gerar_hash_senha(senha: str):
-    """Transforma a senha em um hash seguro e leve para a nuvem"""
-    return pwd_context.hash(senha)
+    """Gera o hash truncando preventivamente para evitar o erro de 72 bytes do bcrypt"""
+    # Cortamos a string nos primeiros 72 caracteres para satisfazer o limite do algoritmo
+    senha_segura = senha[:72]
+    pwd_bytes = senha_segura.encode('utf-8')
+    salt = bcrypt.gensalt()
+    hash_bytes = bcrypt.hashpw(pwd_bytes, salt)
+    return hash_bytes.decode('utf-8') 
 
 def verificar_senha(senha_pura: str, senha_hash: str):
-    """Confere a senha pura com o hash de forma ultra rápida"""
+    """Confere a senha de forma direta e segura usando o motor nativo"""
     try:
-        return pwd_context.verify(senha_pura, senha_hash)
+        senha_segura = senha_pura[:72]
+        pwd_bytes = senha_segura.encode('utf-8')
+        hash_bytes = senha_hash.encode('utf-8')
+        return bcrypt.checkpw(pwd_bytes, hash_bytes)
     except Exception as e:
         print(f"Erro na verificação de senha: {e}")
         return False
