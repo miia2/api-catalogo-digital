@@ -32,6 +32,6 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     token_real = security.criar_token_acesso(data={"sub": user.email})
     return {"access_token": token_real, "token_type": "bearer", "store_slug": user.store_slug}
 
-@router.get("/users/me", response_model=schemas.UserOut)
+@router.get("/me", response_model=schemas.UserOut)
 def read_users_me(current_user: models.User = Depends(security.get_current_user)):
     return current_user
