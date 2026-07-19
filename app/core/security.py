@@ -3,7 +3,7 @@ from jose import jwt, JWTError
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
-from pwdlib import PasswordHash  # Biblioteca moderna e recomendada
+from pwdlib import PasswordHash  
 from app.core import database
 from app import models
 from app.core.config import settings
@@ -13,7 +13,7 @@ ALGORITHM = settings.ALGORITHM
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
 # Inicializa o motor de senhas moderno (Trata o limite de 72 bytes automaticamente)
-pwd_context = PasswordHash.recommended()
+pwd_context = PasswordHash.from_string("bcrypt")
 
 # Configura de onde o FastAPI vai extrair o token
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
