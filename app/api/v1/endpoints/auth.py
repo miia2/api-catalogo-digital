@@ -32,12 +32,8 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     token_real = security.criar_token_acesso(data={"sub": user.email})
     return {"access_token": token_real, "token_type": "bearer", "store_slug": user.store_slug}
 
-# Atalho 1 (O que criamos recentemente)
+# Esta linha única agora atende tanto /auth/me quanto /users/me de forma limpa
 @router.get("/me", response_model=schemas.UserOut)
-def read_users_me(current_user: models.User = Depends(security.get_current_user)):
-    return current_user
-
-# Atalho 2 (Para salvar o Frontend antigo que está chamando em segundo plano)
 @router.get("/users/me", response_model=schemas.UserOut)
-def read_users_me_legacy(current_user: models.User = Depends(security.get_current_user)):
+def read_users_me(current_user: models.User = Depends(security.get_current_user)):
     return current_user
