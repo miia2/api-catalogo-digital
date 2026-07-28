@@ -36,16 +36,20 @@ def criar_produto(
     price: float = Form(...),
     description: Optional[str] = Form(None),
     is_available: bool = Form(True),
-    image: Optional[UploadFile] = File(None), # Imagem opcional para dar flexibilidade
+    image: Optional[UploadFile] = File(None),
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(security.get_current_user)
 ):
     url_da_imagem = None
+    
+    # Tenta fazer o upload para o Cloudinary de forma segura
     if image:
         try:
             url_da_imagem = services.upload_imagem_produto(image)
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Erro no upload da imagem: {str(e)}")
+            print(f"⚠️ Aviso: Falha no upload da imagem (Cloudinary): {e}")
+            # Em caso de falha nas chaves do Cloudinary, gera uma imagem temporária baseada no nome
+            url_da_imagem = f"https://placehold.co/600x400/1e293b/ffffff?text={name.replace(' ', '+')}"
 
     novo_produto = models.Product(
         name=name,
