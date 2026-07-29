@@ -66,6 +66,7 @@ def criar_produto(
     return novo_produto
 
 # CORREÇÃO: PUT aceita FormData para alinhar com o envio do Dashboard.tsx
+# CORREÇÃO DEFINITIVA DO PUT (EDIÇÃO DE PRODUTO)
 @router.put("/{product_id}", response_model=schemas.ProductOut)
 def update_product(
     product_id: int,
@@ -73,7 +74,7 @@ def update_product(
     price: float = Form(...),
     description: Optional[str] = Form(None),
     is_available: bool = Form(True),
-    image: Optional[UploadFile] = File(None), # Troca a imagem só se enviar uma nova
+    image: Optional[UploadFile] = File(None), # Foto totalmente opcional
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(security.get_current_user)
 ):
@@ -83,18 +84,21 @@ def update_product(
     if produto_banco.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Você não tem permissão para editar este produto.")
     
+    # Atualiza os dados de texto
     produto_banco.name = name
     produto_banco.price = price
     produto_banco.description = description
     produto_banco.is_available = is_available
 
-    # Se enviou uma foto nova, atualiza no Cloudinary. Se não enviou, mantém a antiga!
-    if image:
+    # Só processa a imagem se um ARQUIVO REAL e VÁLIDO for enviado
+    if image and image.filename:
         try:
-            produto_banco.image_url = services.upload_imagem_produto(image)
+            url_nova = services.upload_imagem_produto(image)
+            produto_banco.image_url = url_nova
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Erro no upload da nova imagem: {str(e)}")
-        
+            print(f"⚠️ Aviso: Falha no upload da imagem durante a edição: {e}")
+            # Se falhar o upload do Cloudinary na edição, ele mantém a image_url antiga e não quebra o sistema
+    
     db.commit()
     db.refresh(produto_banco)
     return produto_banco
