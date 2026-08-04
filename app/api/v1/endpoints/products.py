@@ -127,10 +127,12 @@ def get_store_catalog(
     search: Optional[str] = Query(None),
     db: Session = Depends(database.get_db)
 ):
+    # 1. Busca o lojista pelo slug
     user = db.query(models.User).filter(models.User.store_slug == slug).first()
     if not user:
         raise HTTPException(status_code=404, detail="Loja não encontrada")
         
+    # 2. Busca os produtos cadastrados para este usuário
     query = db.query(models.Product).filter(models.Product.user_id == user.id)
     
     if search:
@@ -140,6 +142,19 @@ def get_store_catalog(
     skip = (page - 1) * size
     produtos_paginados = query.offset(skip).limit(size).all()
     
+    # 3. Converte os produtos em dicionários seguros para evitar quebras de validação Pydantic
+    lista_produtos = []
+    for p in produtos_paginados:
+        lista_produtos.append({
+            "id": p.id,
+            "name": p.name,
+            "description": p.description or "",
+            "price": float(p.price),
+            "image_url": p.image_url,
+            "is_available": p.is_available if p.is_available is not None else True
+        })
+
+    # 4. Retorna os dados em ambos os formatos para garantir compatibilidade total com o Frontend
     return {
         "store_info": {
             "id": user.id,
@@ -147,8 +162,9 @@ def get_store_catalog(
             "store_slug": user.store_slug,
             "whatsapp_number": user.whatsapp_number
         },
-        "products_pagination": {
-            "items": [schemas.ProductOut.model_validate(p) for p in produtos_paginados],
+        "products": lista_produtos,  # Array direto
+        "products_pagination": {     # Estrutura paginada
+            "items": lista_produtos,
             "total": total_items,
             "page": page,
             "size": size
