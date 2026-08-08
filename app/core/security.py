@@ -58,3 +58,20 @@ def get_current_user(db: Session = Depends(database.get_db), token: str = Depend
     if user is None: 
         raise credentials_exception
     return user
+
+# Use a mesma SECRET_KEY e ALGORITHM que você já tem no arquivo
+RESET_PASSWORD_EXPIRE_MINUTES = 15
+
+def criar_token_recuperacao(email: str) -> str:
+    expires = datetime.utcnow() + timedelta(minutes=RESET_PASSWORD_EXPIRE_MINUTES)
+    to_encode = {"sub": email, "type": "reset_password", "exp": expires}
+    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
+def verificar_token_recuperacao(token: str) -> str:
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        if payload.get("type") != "reset_password":
+            return None
+        return payload.get("sub") # Retorna o e-mail do usuário
+    except JWTError:
+        return None

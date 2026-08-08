@@ -37,3 +37,43 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 @router.get("/users/me", response_model=schemas.UserOut)
 def read_users_me(current_user: models.User = Depends(security.get_current_user)):
     return current_user
+
+@router.post("/forgot-password")
+def forgot_password(
+    body: schemas.ForgotPasswordRequest, 
+    db: Session = Depends(database.get_db)
+):
+    user = db.query(models.User).filter(models.User.email == body.email).first()
+    
+    # ⚠️ Segurança: Por boas práticas, mesmo se o e-mail não existir, 
+    # retornamos 200 OK para evitar que hackers descubram e-mails cadastrados.
+    if user:
+        token = security.criar_token_recuperacao(user.email)
+        
+        # Link que o usuário vai clicar no e-mail (ajuste a URL para o domínio do seu frontend na Vercel)
+        link_reset = f"https://seu-frontend.vercel.app/reset-password?token={token}"
+        
+        # TODO: Enviar o e-mail real aqui (imprimindo no console da Render por enquanto)
+        print(f"📧 [RECUPERAÇÃO DE SENHA] Enviar para {user.email}: {link_reset}")
+        
+    return {"message": "Se o e-mail estiver cadastrado, você receberá o link para redefinir sua senha."}
+
+
+@router.post("/reset-password")
+def reset_password(
+    body: schemas.ResetPasswordRequest, 
+    db: Session = Depends(database.get_db)
+):
+    email = security.verificar_token_recuperacao(body.token)
+    if not email:
+        raise HTTPException(status_code=400, detail="Token inválido ou expirado.")
+        
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+        
+    # Atualiza a senha do usuário com o novo Hash
+    user.hashed_password = security.gerar_hash_senha(body.new_password)
+    db.commit()
+    
+    return {"message": "Senha redefinida com sucesso! Você já pode fazer login."}
